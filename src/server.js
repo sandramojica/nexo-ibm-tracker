@@ -44,14 +44,7 @@ const allowedOrigins =
 
 app.use(
   cors({
-    origin: (origin, cb) => {
-      // Permitir requests sin origen (navegador directo, curl, etc.)
-      if (!origin) return cb(null, true);
-      if (allowedOrigins.includes(origin)) return cb(null, true);
-      // En desarrollo permitir cualquier localhost
-      if (process.env.NODE_ENV !== "production" && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return cb(null, true);
-      cb(new Error("CORS policy violation"));
-    },
+    origin: (origin, cb) => cb(null, true),
     credentials: true,
   })
 );
