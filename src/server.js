@@ -36,8 +36,11 @@ app.use(
 // ── CORS: restrict to same origin in production ───────────────────
 const allowedOrigins =
   process.env.NODE_ENV === "production"
-    ? [`http://${process.env.HOST}:${process.env.PORT}`]
-    : ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"];
+    ? [
+        process.env.RENDER_EXTERNAL_URL ?? `https://nexo-ibm-tracker.onrender.com`,
+        `http://${process.env.HOST}:${process.env.PORT}`,
+      ]
+    : ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080", "http://127.0.0.1:8080"];
 
 app.use(
   cors({
