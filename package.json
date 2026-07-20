@@ -1,0 +1,31 @@
+{
+  "name": "nexo",
+  "version": "1.0.0",
+  "description": "NEXO – Tu enlace inteligente entre objetivos, cursos y herramientas IBM Colombia",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "setup:vapid": "node scripts/generate-vapid.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "axios": "^1.7.9",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.16",
+    "web-push": "^3.6.7",
+    "winston": "^3.17.0",
+    "express-validator": "^7.2.1",
+    "date-fns": "^4.1.0",
+    "jose": "^5.9.6"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
