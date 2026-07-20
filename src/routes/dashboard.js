@@ -94,10 +94,11 @@ function renderObjective(o, linkedCourses = []) {
     : "";
 
   const alert = o.hoursAlert
-    ? `<div style="border-radius:5px;padding:8px 12px;margin-top:8px;font-size:12px;font-weight:600;
-        ${o.hoursAlert.level === "CRITICAL" ? "background:#fff1f0;border:1px solid #ffa39e;color:#a8071a;" :
-          o.hoursAlert.level === "WARNING"  ? "background:#fffbe6;border:1px solid #ffe58f;color:#874d00;" :
-                                              "background:#f0fdf4;border:1px solid #86efac;color:#15803d;"}">
+    ? `<div class="${o.hoursAlert.level === "CRITICAL" ? "blink-red" : o.hoursAlert.level === "WARNING" ? "blink-yellow" : ""}"
+          style="border-radius:5px;padding:8px 12px;margin-top:8px;font-size:12px;font-weight:600;
+          ${o.hoursAlert.level === "CRITICAL" ? "background:#fff1f0;border:1px solid #ffa39e;color:#a8071a;" :
+            o.hoursAlert.level === "WARNING"  ? "background:#fffbe6;border:1px solid #ffe58f;color:#874d00;" :
+                                                "background:#f0fdf4;border:1px solid #86efac;color:#15803d;"}">
         ⏱ ${o.hoursAlert.message}
       </div>`
     : "";
@@ -436,7 +437,8 @@ export function buildDashboardHtml(isManager = false) {
         </div>
 
         <!-- Alert -->
-        <div style="border-radius:5px;padding:6px 10px;font-size:12px;margin-bottom:6px;${alertStyle(c.alert.level)}">
+        <div class="${c.alert.level === "CRITICAL" || c.alert.level === "OVERDUE" ? "blink-red" : c.alert.level === "WARNING" ? "blink-yellow" : ""}"
+             style="border-radius:5px;padding:6px 10px;font-size:12px;margin-bottom:6px;${alertStyle(c.alert.level)}">
           ${c.alert.message}
         </div>
 
@@ -451,7 +453,7 @@ export function buildDashboardHtml(isManager = false) {
   // Alerta global de cursos urgentes en el resumen
   const criticalCount = inProgress.filter(c => c.alert.level === "CRITICAL" || c.alert.level === "OVERDUE").length;
   const globalAlert = criticalCount > 0
-    ? `<div style="background:#fff1f0;border:1px solid #ffa39e;border-radius:6px;padding:10px 14px;margin-bottom:20px;font-size:13px;color:#a8071a;display:flex;align-items:center;gap:8px;">
+    ? `<div class="blink-red" style="background:#fff1f0;border:1px solid #ffa39e;border-radius:6px;padding:10px 14px;margin-bottom:20px;font-size:13px;color:#a8071a;display:flex;align-items:center;gap:8px;">
         🔴 <strong>${criticalCount} curso${criticalCount > 1 ? "s" : ""} urgente${criticalCount > 1 ? "s" : ""}</strong> — vence${criticalCount > 1 ? "n" : ""} en menos de 8 días. Encuéntralos dentro de cada objetivo marcado en rojo.
       </div>`
     : "";
@@ -507,7 +509,20 @@ export function buildDashboardHtml(isManager = false) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>IBM Objectives Tracker</title>
-  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;background:#f7f8fa;color:#1f2328;}</style>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;background:#f7f8fa;color:#1f2328;}
+    @keyframes blink-red {
+      0%,100% { opacity:1; box-shadow:0 0 6px 2px rgba(220,38,38,0.7); }
+      50%      { opacity:0.65; box-shadow:0 0 2px 0px rgba(220,38,38,0.2); }
+    }
+    @keyframes blink-yellow {
+      0%,100% { opacity:1; box-shadow:0 0 6px 2px rgba(234,179,8,0.7); }
+      50%      { opacity:0.65; box-shadow:0 0 2px 0px rgba(234,179,8,0.2); }
+    }
+    .blink-red    { animation: blink-red    1.2s ease-in-out infinite; }
+    .blink-yellow { animation: blink-yellow 1.4s ease-in-out infinite; }
+  </style>
 </head>
 <body>
 <div style="max-width:760px;margin:0 auto;padding:24px 16px 48px;">
