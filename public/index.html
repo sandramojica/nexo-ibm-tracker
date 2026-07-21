@@ -32,7 +32,9 @@
   .obj-id { font-size: 11px; font-weight: 700; color: #3b82d4; background: #eff6ff; border-radius: 4px; padding: 2px 6px; white-space: nowrap; }
   .obj-title { font-size: 13px; font-weight: 600; flex: 1; }
   .obj-pct { font-size: 18px; font-weight: 700; white-space: nowrap; }
-  .good { color: #15803d; } .mid { color: #b45309; } .low { color: #dc2626; }
+  .good { color: #15803d; }
+  .mid  { color: #b45309; animation: blink-yellow 1.6s step-start -1.2s infinite; }
+  .low  { color: #dc2626; animation: blink-red 0.8s step-start infinite; }
 
   .progress-bar { height: 6px; background: #e5e7eb; border-radius: 3px; margin-bottom: 10px; overflow: hidden; }
   .progress-fill { height: 100%; border-radius: 3px; }
@@ -53,9 +55,19 @@
   .hrs { font-size: 10px; color: #57606a; background: #e5e7eb; border-radius: 3px; padding: 1px 5px; }
 
   .alert-box { border-radius: 5px; padding: 8px 12px; margin-top: 8px; font-size: 12px; font-weight: 600; }
-  .CRITICAL { background: #fff1f0; border: 1px solid #ffa39e; color: #a8071a; }
-  .WARNING  { background: #fffbe6; border: 1px solid #ffe58f; color: #874d00; }
+  .CRITICAL { background: #fff1f0; border: 1px solid #ffa39e; color: #a8071a; animation: blink-red 0.8s step-start infinite; }
+  .WARNING  { background: #fffbe6; border: 1px solid #ffe58f; color: #874d00; animation: blink-yellow 1.6s step-start -1.2s infinite; }
   .OK       { background: #f0fdf4; border: 1px solid #86efac; color: #15803d; }
+
+  @keyframes blink-red {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px 3px rgba(220,38,38,0.9); }
+    50%       { opacity: 0; box-shadow: none; }
+  }
+  @keyframes blink-yellow {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px 2px rgba(234,179,8,0.7); }
+    50%       { opacity: 0; box-shadow: none; }
+  }
+  .blink-bulb { animation: blink-yellow 1.6s step-start -2.0s infinite; }
 
   .footer { text-align: center; margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #57606a; }
 
@@ -185,18 +197,44 @@ function render(app, objectives, profile, demo) {
       }
 
       if (o.suggestions && o.suggestions.length) {
-        html += `<div class="suggestions"><div class="section-title">Sugerencias</div>
-          ${o.suggestions.map(s => `<div class="tip">${s}</div>`).join('')}
-        </div>`;
+        // Separar sugerencias limpias de las que contienen URLs de cursos (→ "...")
+        const cleanTips   = o.suggestions.filter(s => !s.startsWith('→'));
+        const courseTips  = o.suggestions.filter(s => s.startsWith('→'));
+        if (cleanTips.length) {
+          html += `<div class="suggestions"><div class="section-title">Sugerencias</div>
+            ${cleanTips.map(s => `<div class="tip">${s}</div>`).join('')}
+          </div>`;
+        }
+        // courseTips se incluyen dentro del desplegable de cursos (ver abajo)
+        o._courseTips = courseTips;
       }
 
       if (o.recommendedCourses && o.recommendedCourses.length) {
-        html += `<div class="courses"><div class="section-title" style="color:#7c5cd8;margin-top:8px">📚 Cursos recomendados para tu perfil</div>
-          ${o.recommendedCourses.map(c => `
-            <div class="course-item">
-              <a href="${c.url}" target="_blank">${c.name}</a>
-              <span class="hrs">${c.hours} h</span>
-            </div>`).join('')}
+        const top5 = o.recommendedCourses.slice(0, 5);
+        const rest  = o.recommendedCourses.slice(5);
+        const courseRow = c => `
+          <div class="course-item">
+            <a href="${c.url}" target="_blank">${c.displayName || c.nameEs || c.name}</a>
+            <span class="hrs">${c.hours} h</span>
+          </div>`;
+        const extraTipsHtml = (o._courseTips || []).length
+          ? `<div class="suggestions" style="margin-top:8px;margin-bottom:4px;">
+              ${o._courseTips.map(s => `<div class="tip">${s}</div>`).join('')}
+             </div>`
+          : '';
+        html += `<div class="courses">
+          <div class="section-title" style="color:#7c5cd8;margin-top:8px">📚 Cursos recomendados para tu perfil</div>
+          ${top5.map(courseRow).join('')}
+          ${(rest.length > 0 || extraTipsHtml) ? `
+          <details style="margin-top:6px;">
+            <summary style="cursor:pointer;display:inline-block;background:#7c5cd8;color:#fff;border-radius:6px;padding:4px 14px;font-size:11px;font-weight:700;list-style:none;user-select:none;">
+              + Ver ${rest.length} cursos más
+            </summary>
+            <div style="margin-top:6px;">
+              ${extraTipsHtml}
+              ${rest.map(courseRow).join('')}
+            </div>
+          </details>` : ''}
         </div>`;
       }
 

@@ -86,8 +86,12 @@ function renderObjective(o, linkedCourses = []) {
               <div style="height:5px;background:#e5e7eb;border-radius:3px;margin-bottom:5px;overflow:hidden;">
                 <div style="height:100%;width:${c.progressPct}%;background:${barColor};border-radius:3px;"></div>
               </div>
-              <div style="${alertStyle}">${c.alert.message}</div>
-              ${c.paceSuggestion ? `<div style="font-size:11px;color:#57606a;margin-top:3px;">💡 ${c.paceSuggestion}</div>` : ""}
+              <div style="${alertStyle}">
+                ${c.alert.level === "OVERDUE" || c.alert.level === "CRITICAL" ? `<span class="blink-red" style="display:inline;font-size:18px;">🚨</span> ` : ""}${c.alert.message}
+              </div>
+              ${c.paceSuggestion ? `<div style="font-size:11px;color:#57606a;margin-top:3px;">
+                <span class="blink-bulb" style="display:inline;font-size:18px;">💡</span> ${c.paceSuggestion}
+              </div>` : ""}
             </div>`;
         }).join("")}
       </div>`
@@ -99,7 +103,7 @@ function renderObjective(o, linkedCourses = []) {
           ${o.hoursAlert.level === "CRITICAL" ? "background:#fff1f0;border:1px solid #ffa39e;color:#a8071a;" :
             o.hoursAlert.level === "WARNING"  ? "background:#fffbe6;border:1px solid #ffe58f;color:#874d00;" :
                                                 "background:#f0fdf4;border:1px solid #86efac;color:#15803d;"}">
-        ⏱ ${o.hoursAlert.message}
+        ${o.hoursAlert.level === "CRITICAL" ? `<span class="blink-red" style="display:inline;font-size:18px;">🚨</span> ` : ""}⏱ ${o.hoursAlert.message}
       </div>`
     : "";
 
@@ -185,54 +189,72 @@ function renderHolidayTimeGuide(guide) {
     const holidayMap  = {};
     holidays.forEach(h => { holidayMap[parseInt(h.date.slice(8))] = h; });
 
-    let cells = "";
+    // Construir tabla directamente con arrays de celdas por fila
+    const allCells = [];
     // Celdas vacías al inicio
     for (let i = 0; i < startCol; i++) {
-      cells += `<div style="width:26px;height:26px;"></div>`;
+      allCells.push(`<td style="padding:1px;"></td>`);
     }
     for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = `${year}-${String(monthIdx+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+      const dateStr   = `${year}-${String(monthIdx+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
       const isHoliday = holidayDays.has(d);
       const isPast    = dateStr < todayStr;
       const isToday   = dateStr === todayStr;
       const h         = holidayMap[d];
       const bg        = isHoliday ? color : isToday ? "#f0f9ff" : "transparent";
-      const textColor = isHoliday ? "#fff" : isToday ? "#1d4ed8" : isPast ? "#d1d5db" : "#1f2328";
-      const border    = isToday  ? `2px solid #3b82d4` : "2px solid transparent";
-      const title     = isHoliday ? `title="${h.name}${h.moved ? ' (trasladado)' : ''}"` : "";
-      cells += `<div ${title} style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:${isHoliday||isToday?'700':'400'};background:${bg};color:${textColor};border:${border};cursor:${isHoliday?'help':'default'};opacity:${isPast&&!isHoliday?'.4':'1'};">${d}</div>`;
+      const txtColor  = isHoliday ? "#fff" : isToday ? "#1d4ed8" : isPast ? "#d1d5db" : "#1f2328";
+      const fw        = (isHoliday || isToday) ? "bold" : "normal";
+      const opacity   = (isPast && !isHoliday) ? "0.4" : "1";
+      const titleAttr = isHoliday ? ` title="${h.name.replace(/"/g, "&quot;")}${h.moved ? " (trasladado)" : ""}"` : "";
+      allCells.push(
+        `<td${titleAttr} style="padding:1px;text-align:center;">` +
+        `<span style="display:inline-block;width:26px;height:26px;line-height:26px;border-radius:50%;` +
+        `font-size:11px;font-weight:${fw};background:${bg};color:${txtColor};opacity:${opacity};` +
+        `${isToday ? "border:2px solid #3b82d4;" : ""}` +
+        `${isHoliday ? "cursor:help;" : ""}` +
+        `">${d}</span></td>`
+      );
+    }
+
+    // Agrupar en filas de 7
+    const headerRow = `<tr>${DAYS_HEADER.map(d =>
+      `<th style="text-align:center;font-size:9px;font-weight:700;color:#94a3b8;padding:2px 1px;">${d}</th>`
+    ).join("")}</tr>`;
+    let tableRows = headerRow;
+    for (let i = 0; i < allCells.length; i += 7) {
+      const slice = allCells.slice(i, i + 7);
+      while (slice.length < 7) slice.push(`<td></td>`);
+      tableRows += `<tr>${slice.join("")}</tr>`;
     }
 
     const futureHolidays = holidays.filter(h => h.date >= todayStr);
-    if (futureHolidays.length === 0) return ""; // ocultar mes completamente si todos pasaron
-
     const holidayList = futureHolidays.map(h => {
       const d   = new Date(h.date + "T00:00:00");
       const num = String(d.getDate()).padStart(2,"0");
-      return `<div style="display:flex;align-items:center;gap:5px;font-size:10px;padding:2px 0;">
-        <span style="background:${color};color:#fff;border-radius:3px;padding:1px 5px;font-weight:700;white-space:nowrap;">${num} ${MONTHS_SHORT[monthIdx]}</span>
-        <span style="color:#1f2328;">${h.name}${h.moved ? ' <span style="color:#7c5cd8;font-size:9px;">(lunes)</span>' : ''}</span>
-      </div>`;
+      return `<tr><td colspan="2" style="padding:3px 0;font-size:10px;">` +
+        `<span style="background:${color};color:#fff;border-radius:3px;padding:1px 5px;font-weight:700;margin-right:5px;">${num} ${MONTHS_SHORT[monthIdx]}</span>` +
+        `${h.name}${h.moved ? " (lunes)" : ""}` +
+        `</td></tr>`;
     }).join("");
 
-    return `
-      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;min-width:200px;">
-        <div style="background:${color};color:#fff;padding:8px 10px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.03em;">
-          ${MONTHS_ES[monthIdx]} 2026
-          <span style="font-size:10px;font-weight:400;opacity:.85;margin-left:6px;">${futureHolidays.length} festivo${futureHolidays.length>1?'s':''}</span>
-        </div>
-        <div style="padding:8px;">
-          <div style="display:grid;grid-template-columns:repeat(7,26px);gap:1px;justify-content:center;margin-bottom:4px;">
-            ${DAYS_HEADER.map(d => `<div style="width:26px;text-align:center;font-size:9px;font-weight:700;color:#94a3b8;padding-bottom:2px;">${d}</div>`).join("")}
-            ${cells}
-          </div>
-          <div style="border-top:1px solid #f0f0f0;padding-top:6px;margin-top:2px;">${holidayList}</div>
-        </div>
-      </div>`;
+    return (
+      `<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">` +
+      `<div style="background:${color};color:#fff;padding:8px 12px;font-size:12px;font-weight:700;text-align:center;">` +
+      `${MONTHS_ES[monthIdx]} 2026` +
+      `<span style="font-size:10px;font-weight:normal;opacity:.85;margin-left:6px;">${futureHolidays.length} festivo${futureHolidays.length > 1 ? "s" : ""}</span>` +
+      `</div>` +
+      `<div style="padding:10px;">` +
+      `<table style="border-collapse:collapse;width:100%;">` +
+      tableRows +
+      `</table>` +
+      (holidayList ? `<table style="border-collapse:collapse;width:100%;margin-top:6px;border-top:1px solid #f0f0f0;padding-top:6px;">${holidayList}</table>` : "") +
+      `</div>` +
+      `</div>`
+    );
   }
 
-  // Solo el mes actual
   const currentMonth = today.getMonth();
+  const calendarMonth = currentMonth;
   const currentCalendar = renderMonthCalendar(currentMonth, byMonth[currentMonth] || []);
 
   // Códigos Time
@@ -285,9 +307,8 @@ function renderHolidayTimeGuide(guide) {
         </div>` : ""}
 
         <!-- Calendario mes actual -->
-        ${currentCalendar ? `
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#57606a;margin-bottom:10px;">&#128198; Calendario — ${MONTHS_ES[currentMonth]} 2026</div>
-        <div style="margin-bottom:16px;">${currentCalendar}</div>` : ""}
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#57606a;margin-bottom:10px;">&#128198; Calendario — ${MONTHS_ES[calendarMonth]} 2026</div>
+        <div style="margin-bottom:16px;">${currentCalendar}</div>
 
         <!-- Guía de códigos Time -->
         <div style="border-top:1px solid #e5e7eb;padding-top:14px;margin-top:4px;">
@@ -439,13 +460,13 @@ export function buildDashboardHtml(isManager = false) {
         <!-- Alert -->
         <div class="${c.alert.level === "CRITICAL" || c.alert.level === "OVERDUE" ? "blink-red" : c.alert.level === "WARNING" ? "blink-yellow" : ""}"
              style="border-radius:5px;padding:6px 10px;font-size:12px;margin-bottom:6px;${alertStyle(c.alert.level)}">
-          ${c.alert.message}
+          ${c.alert.level === "CRITICAL" || c.alert.level === "OVERDUE" ? `<span class="blink-red" style="display:inline;font-size:18px;">🚨</span> ` : ""}${c.alert.message}
         </div>
 
         <!-- Pace suggestion -->
         ${c.paceSuggestion ? `
         <div style="background:#f7f8fa;border-radius:5px;padding:7px 10px;font-size:12px;color:#1f2328;margin-top:4px;">
-          💡 ${c.paceSuggestion}
+          <span class="blink-bulb" style="display:inline;font-size:18px;">💡</span> ${c.paceSuggestion}
         </div>` : ""}
       </div>`;
   }
@@ -454,7 +475,7 @@ export function buildDashboardHtml(isManager = false) {
   const criticalCount = inProgress.filter(c => c.alert.level === "CRITICAL" || c.alert.level === "OVERDUE").length;
   const globalAlert = criticalCount > 0
     ? `<div class="blink-red" style="background:#fff1f0;border:1px solid #ffa39e;border-radius:6px;padding:10px 14px;margin-bottom:20px;font-size:13px;color:#a8071a;display:flex;align-items:center;gap:8px;">
-        🔴 <strong>${criticalCount} curso${criticalCount > 1 ? "s" : ""} urgente${criticalCount > 1 ? "s" : ""}</strong> — vence${criticalCount > 1 ? "n" : ""} en menos de 8 días. Encuéntralos dentro de cada objetivo marcado en rojo.
+        <span class="blink-red" style="display:inline;font-size:22px;">🚨</span> <strong>${criticalCount} curso${criticalCount > 1 ? "s" : ""} urgente${criticalCount > 1 ? "s" : ""}</strong> — vence${criticalCount > 1 ? "n" : ""} en menos de 8 días. Encuéntralos dentro de cada objetivo marcado en rojo.
       </div>`
     : "";
 
@@ -513,15 +534,16 @@ export function buildDashboardHtml(isManager = false) {
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;background:#f7f8fa;color:#1f2328;}
     @keyframes blink-red {
-      0%,100% { opacity:1; box-shadow:0 0 6px 2px rgba(220,38,38,0.7); }
-      50%      { opacity:0.65; box-shadow:0 0 2px 0px rgba(220,38,38,0.2); }
+      0%,100% { opacity:1; box-shadow:0 0 8px 3px rgba(220,38,38,0.9); }
+      50%      { opacity:0; box-shadow:none; }
     }
     @keyframes blink-yellow {
       0%,100% { opacity:1; box-shadow:0 0 6px 2px rgba(234,179,8,0.7); }
-      50%      { opacity:0.65; box-shadow:0 0 2px 0px rgba(234,179,8,0.2); }
+      50%      { opacity:0; box-shadow:none; }
     }
-    .blink-red    { animation: blink-red    1.2s ease-in-out infinite; }
-    .blink-yellow { animation: blink-yellow 1.4s ease-in-out infinite; }
+    .blink-red    { animation: blink-red    0.8s step-start infinite; }
+    .blink-yellow { animation: blink-yellow 1.6s step-start -1.2s infinite; }
+    .blink-bulb   { animation: blink-yellow 1.6s step-start -2.0s infinite; }
   </style>
 </head>
 <body>

@@ -103,7 +103,7 @@ app.use((err, _req, res, _next) => {
 });
 
 // ── Start server ─────────────────────────────────────────────────
-const HOST = process.env.HOST ?? "0.0.0.0";
+const HOST = process.env.HOST ?? "127.0.0.1";
 const PORT = parseInt(process.env.PORT ?? "8080", 10);
 
 app.listen(PORT, HOST, () => {
