@@ -65,7 +65,8 @@ router.get("/login", (req, res) => {
 router.post("/login", (req, res) => {
   const { password } = req.body || {};
   if (password === MANAGER_PASSWORD) {
-    res.setHeader("Set-Cookie", `nexo_manager=1; Path=/; HttpOnly; Max-Age=86400; SameSite=Lax`);
+    const isProduction = process.env.NODE_ENV === "production";
+    res.setHeader("Set-Cookie", `nexo_manager=1; Path=/; HttpOnly; Max-Age=86400; SameSite=Lax${isProduction ? "; Secure" : ""}`);
     res.redirect(303, "/nexo-manager");
   } else {
     res.redirect(303, "/nexo-manager/login?error=1");
