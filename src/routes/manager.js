@@ -12,10 +12,17 @@ const MANAGER_PASSWORD = process.env.MANAGER_PASSWORD || "002741661";
 
 // ── Auth middleware ───────────────────────────────────────────────
 function managerAuth(req, res, next) {
-  const cookie = req.headers.cookie || "";
-  if (cookie.includes("nexo_manager=1")) return next();
-  res.redirect("/nexo-manager/login");
+const cookie = req.headers.cookie || "";
+if (cookie.includes("nexo_manager=1")) return next();
+res.redirect("/nexo-manager/login");
 }
+
+// ── Logout: borra la cookie ───────────────────────────────────────
+router.get("/logout", (_req, res) => {
+const isProduction = process.env.NODE_ENV === "production";
+res.setHeader("Set-Cookie", `nexo_manager=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax${isProduction ? "; Secure" : ""}`);
+res.redirect("/nexo-manager/login");
+});
 
 // ── Login page ────────────────────────────────────────────────────
 router.get("/login", (req, res) => {
@@ -66,7 +73,8 @@ router.post("/login", (req, res) => {
   const { password } = req.body || {};
   if (password === MANAGER_PASSWORD) {
     const isProduction = process.env.NODE_ENV === "production";
-    res.setHeader("Set-Cookie", `nexo_manager=1; Path=/; HttpOnly; Max-Age=0; SameSite=Lax${isProduction ? "; Secure" : ""}`);
+    // Cookie de sesión sin persistencia — expira al cerrar el browser
+    res.setHeader("Set-Cookie", `nexo_manager=1; Path=/; HttpOnly; SameSite=Lax${isProduction ? "; Secure" : ""}`);
     res.redirect(303, "/nexo-manager");
   } else {
     res.redirect(303, "/nexo-manager/login?error=1");
@@ -75,8 +83,17 @@ router.post("/login", (req, res) => {
 
 // ── Vista principal — idéntica al dashboard ───────────────────────
 router.get("/", managerAuth, (_req, res) => {
-  // Ruta: /nexo-manager
-  res.send(buildDashboardHtml(true));
+  let html = buildDashboardHtml(true);
+  // Inyectar botón de cerrar sesión antes del cierre del body
+  html = html.replace(
+    "</body>",
+    `<div style="text-align:center;padding:16px 0 32px;">
+      <a href="/nexo-manager/logout" style="font-size:12px;color:#57606a;text-decoration:none;border:1px solid #e5e7eb;border-radius:6px;padding:6px 16px;">
+        &#128274; Cerrar sesi&#243;n
+      </a>
+    </div></body>`
+  );
+  res.send(html);
 });
 
 export default router;
