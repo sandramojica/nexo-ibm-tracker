@@ -584,34 +584,25 @@ export function buildDashboardHtml(isManager = false) {
   <div style="margin-bottom:20px;">
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#57606a;margin-bottom:10px;border-left:3px solid #3b82d4;padding-left:8px;">Acceso R&#225;pido a Plataformas IBM</div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
-      <a href="https://yourlearning.ibm.com" target="_blank" rel="noopener noreferrer"
-         style="display:block;text-decoration:none;border-radius:8px;padding:14px 12px;text-align:center;color:#fff;background:#1d4ed8;">
-        <span style="font-size:22px;display:block;margin-bottom:4px;">&#128218;</span>
-        <span style="font-size:13px;font-weight:700;display:block;">Your Learning</span>
-        <span style="font-size:10px;opacity:.8;display:block;margin-top:2px;line-height:1.3;">Cursos, badges y trainings</span>
-        <span style="display:inline-block;margin-top:8px;font-size:11px;font-weight:700;background:rgba(255,255,255,0.2);border-radius:20px;padding:2px 10px;">Ir ahora &#8594;</span>
-      </a>
-      <a href="https://sf-wz-prd-p2-4snxii8t.workzonehr.cfapps.us10.hana.ondemand.com/site#workzone-home" target="_blank" rel="noopener noreferrer"
-         style="display:block;text-decoration:none;border-radius:8px;padding:14px 12px;text-align:center;color:#fff;background:#15803d;">
-        <span style="font-size:22px;display:block;margin-bottom:4px;">&#127919;</span>
-        <span style="font-size:13px;font-weight:700;display:block;">SuccessFactors</span>
-        <span style="font-size:10px;opacity:.8;display:block;margin-top:2px;line-height:1.3;">Objetivos, feedback y reflections</span>
-        <span style="display:inline-block;margin-top:8px;font-size:11px;font-weight:700;background:rgba(255,255,255,0.2);border-radius:20px;padding:2px 10px;">Ir ahora &#8594;</span>
-      </a>
-      <a href="https://time.ibm.com/week" target="_blank" rel="noopener noreferrer"
-         style="display:block;text-decoration:none;border-radius:8px;padding:14px 12px;text-align:center;color:#fff;background:#7c3aed;">
-        <span style="font-size:22px;display:block;margin-bottom:4px;">&#9203;</span>
-        <span style="font-size:13px;font-weight:700;display:block;">Time Recording</span>
-        <span style="font-size:10px;opacity:.8;display:block;margin-top:2px;line-height:1.3;">Registro de horas y timesheets</span>
-        <span style="display:inline-block;margin-top:8px;font-size:11px;font-weight:700;background:rgba(255,255,255,0.2);border-radius:20px;padding:2px 10px;">Ir ahora &#8594;</span>
-      </a>
-      <a href="https://w3.ibm.com/services/tools/mysa/app/#/login" target="_blank" rel="noopener noreferrer"
-         style="display:block;text-decoration:none;border-radius:8px;padding:14px 12px;text-align:center;color:#fff;background:#b45309;">
-        <span style="font-size:22px;display:block;margin-bottom:4px;">&#128202;</span>
-        <span style="font-size:13px;font-weight:700;display:block;">My Hours Plan</span>
-        <span style="font-size:10px;opacity:.8;display:block;margin-top:2px;line-height:1.3;">Asignaci&#243;n y utilizaci&#243;n</span>
-        <span style="display:inline-block;margin-top:8px;font-size:11px;font-weight:700;background:rgba(255,255,255,0.2);border-radius:20px;padding:2px 10px;">Ir ahora &#8594;</span>
-      </a>
+      ${[
+        { icon:"&#128218;", name:"Your Learning",    desc:"Cursos, badges y trainings",          bg:"#1d4ed8", url:"https://yourlearning.ibm.com" },
+        { icon:"&#127919;", name:"SuccessFactors",   desc:"Objetivos, feedback y reflections",   bg:"#15803d", url:"https://sf-wz-prd-p2-4snxii8t.workzonehr.cfapps.us10.hana.ondemand.com/site#workzone-home" },
+        { icon:"&#9203;",   name:"Time Recording",   desc:"Registro de horas y timesheets",      bg:"#7c3aed", url:"https://time.ibm.com/week" },
+        { icon:"&#128202;", name:"My Hours Plan",    desc:"Asignaci&#243;n y utilizaci&#243;n",  bg:"#b45309", url:"https://w3.ibm.com/services/tools/mysa/app/#/login" },
+      ].map(b => isManager
+        ? `<div style="display:block;border-radius:8px;padding:14px 12px;text-align:center;color:#fff;background:${b.bg};opacity:0.75;cursor:default;">
+            <span style="font-size:22px;display:block;margin-bottom:4px;">${b.icon}</span>
+            <span style="font-size:13px;font-weight:700;display:block;">${b.name}</span>
+            <span style="font-size:10px;opacity:.8;display:block;margin-top:2px;line-height:1.3;">${b.desc}</span>
+           </div>`
+        : `<a href="${b.url}" target="_blank" rel="noopener noreferrer"
+              style="display:block;text-decoration:none;border-radius:8px;padding:14px 12px;text-align:center;color:#fff;background:${b.bg};">
+            <span style="font-size:22px;display:block;margin-bottom:4px;">${b.icon}</span>
+            <span style="font-size:13px;font-weight:700;display:block;">${b.name}</span>
+            <span style="font-size:10px;opacity:.8;display:block;margin-top:2px;line-height:1.3;">${b.desc}</span>
+            <span style="display:inline-block;margin-top:8px;font-size:11px;font-weight:700;background:rgba(255,255,255,0.2);border-radius:20px;padding:2px 10px;">Ir ahora &#8594;</span>
+           </a>`
+      ).join("")}
     </div>
   </div>
 
