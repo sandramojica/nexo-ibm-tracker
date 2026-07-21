@@ -103,7 +103,8 @@ app.use((err, _req, res, _next) => {
 });
 
 // ── Start server ─────────────────────────────────────────────────
-const HOST = process.env.HOST ?? "127.0.0.1";
+// En producción (Render) siempre 0.0.0.0; en desarrollo localhost
+const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : (process.env.HOST ?? "127.0.0.1");
 const PORT = parseInt(process.env.PORT ?? "8080", 10);
 
 app.listen(PORT, HOST, () => {
